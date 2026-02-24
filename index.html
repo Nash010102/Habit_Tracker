@@ -1,347 +1,491 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EVOLVE</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVOLVE</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+<canvas id="particles"></canvas>
 
-<!-- PARTICLE CANVAS for celebrations -->
-<canvas id="particleCanvas"></canvas>
-
-<!-- LOOT DROP MODAL -->
-<div id="lootModal" class="modal-overlay hidden">
-  <div class="loot-box">
-    <div class="loot-glow"></div>
-    <div class="loot-icon">🎁</div>
-    <h2>LOOT DROP</h2>
-    <p id="lootRarity" class="loot-rarity">RARE</p>
-    <p id="lootDesc" class="loot-desc"></p>
-    <p id="lootReward" class="loot-reward"></p>
-    <button onclick="closeLoot()" class="btn gold-btn">CLAIM</button>
+<!-- FOCUS MODE OVERLAY -->
+<div id="focusOverlay" class="focus-overlay" style="display:none">
+  <div class="focus-inner">
+    <button class="btn-small" onclick="toggleFocusMode()">✕ EXIT FOCUS</button>
+    <h2>⚔️ FOCUS MODE</h2>
+    <div id="focusMissions"></div>
+    <div id="focusTimer" class="focus-timer-box"></div>
   </div>
 </div>
 
-<!-- ACHIEVEMENT TOAST -->
-<div id="achievementToast" class="achievement-toast hidden">
-  <div class="achievement-icon">🏆</div>
-  <div class="achievement-info">
-    <span class="achievement-label">ACHIEVEMENT UNLOCKED</span>
-    <span id="achievementName" class="achievement-name"></span>
+<!-- MODALS -->
+<div id="levelUpModal" class="modal-overlay" style="display:none">
+  <div class="modal-box gold-glow">
+    <h2>⚔️ LEVEL UP!</h2>
+    <p id="levelUpText"></p>
+    <p id="levelUpTitle" class="title-unlock"></p>
+    <p class="sp-note">+1 Skill Point earned!</p>
+    <button class="btn-ok" onclick="closeLevelUp()">CONTINUE</button>
+  </div>
+</div>
+<div id="lootModal" class="modal-overlay" style="display:none">
+  <div class="modal-box loot-glow">
+    <h2>🎁 LOOT DROP!</h2>
+    <p id="lootText"></p>
+    <button class="btn-ok" onclick="closeLoot()">CLAIM</button>
+  </div>
+</div>
+<div id="achievementModal" class="modal-overlay" style="display:none">
+  <div class="modal-box achievement-glow">
+    <h2>🏆 ACHIEVEMENT UNLOCKED!</h2>
+    <p id="achievementText"></p>
+    <button class="btn-ok" onclick="closeAchievementModal()">NICE</button>
+  </div>
+</div>
+<div id="bossDefeatedModal" class="modal-overlay" style="display:none">
+  <div class="modal-box gold-glow">
+    <h2>🐉 BOSS DEFEATED!</h2>
+    <p id="bossDefeatedText"></p>
+    <button class="btn-ok" onclick="closeBossDefeated()">CLAIM REWARDS</button>
+  </div>
+</div>
+<div id="milestoneModal" class="modal-overlay" style="display:none">
+  <div class="modal-box gold-glow">
+    <h2>💎 XP MILESTONE!</h2>
+    <p id="milestoneText"></p>
+    <button class="btn-ok" onclick="closeMilestone()">ONWARD</button>
+  </div>
+</div>
+<div id="prestigeModal" class="modal-overlay" style="display:none">
+  <div class="modal-box prestige-glow">
+    <h2>♻️ PRESTIGE</h2>
+    <p>Reset to Level 1 with a permanent <strong>+5% XP bonus</strong> per prestige.</p>
+    <p>You keep: achievements, titles, pet level, records.</p>
+    <p>You lose: XP, level, skills, inventory, missions progress.</p>
+    <button class="btn-ok" onclick="confirmPrestige()">PRESTIGE NOW</button>
+    <button class="btn-cancel" onclick="closePrestige()">CANCEL</button>
+  </div>
+</div>
+<div id="randomEventModal" class="modal-overlay" style="display:none">
+  <div class="modal-box event-glow">
+    <h2>🎲 RANDOM EVENT!</h2>
+    <p id="randomEventText"></p>
+    <button class="btn-ok" onclick="closeRandomEvent()">ACCEPT FATE</button>
+  </div>
+</div>
+<div id="dailyReportModal" class="modal-overlay" style="display:none">
+  <div class="modal-box report-glow">
+    <h2>📝 DAILY REPORT</h2>
+    <div id="dailyReportContent"></div>
+    <button class="btn-ok" onclick="closeDailyReport()">CLOSE</button>
+  </div>
+</div>
+<div id="miniGameModal" class="modal-overlay" style="display:none">
+  <div class="modal-box game-glow">
+    <h2>🧠 MEMORY TRIAL</h2>
+    <p id="miniGameInstructions">Memorize the sequence, then repeat it!</p>
+    <div id="miniGameGrid" class="mini-game-grid"></div>
+    <p id="miniGameStatus"></p>
+    <button id="miniGameStartBtn" class="btn-ok" onclick="startMiniGame()">START</button>
+    <button class="btn-cancel" onclick="closeMiniGame()">LEAVE</button>
+  </div>
+</div>
+<div id="arenaModal" class="modal-overlay" style="display:none">
+  <div class="modal-box arena-glow">
+    <h2>🏟️ CHALLENGE ARENA</h2>
+    <p id="arenaText"></p>
+    <div id="arenaTimer" class="arena-timer"></div>
+    <div id="arenaProgress"></div>
+    <button id="arenaStartBtn" class="btn-ok" onclick="startArena()">BEGIN</button>
+    <button class="btn-cancel" onclick="closeArena()">LEAVE</button>
+  </div>
+</div>
+<div id="shopModal" class="modal-overlay" style="display:none">
+  <div class="modal-box shop-glow">
+    <h2>🛒 REWARD SHOP</h2>
+    <p>Gold: <span id="shopGold" class="gold-text">0</span></p>
+    <div id="shopItems" class="shop-grid"></div>
+    <button class="btn-cancel" onclick="closeShop()">CLOSE</button>
   </div>
 </div>
 
-<!-- LEVEL UP OVERLAY -->
-<div id="levelUpOverlay" class="modal-overlay hidden">
-  <div class="level-up-box">
-    <div class="level-up-rays"></div>
-    <h1>LEVEL UP</h1>
-    <p id="levelUpNumber" class="level-up-number"></p>
-    <p id="levelUpRank" class="level-up-rank"></p>
-    <p id="levelUpReward" class="level-up-reward"></p>
-    <button onclick="closeLevelUp()" class="btn gold-btn">CONTINUE</button>
+<!-- AVATAR PICKER -->
+<div id="avatarPicker" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h2>🎭 Choose Your Avatar</h2>
+    <div id="avatarGrid" class="avatar-grid"></div>
+    <button class="btn-cancel" onclick="closeAvatarPicker()">CANCEL</button>
   </div>
 </div>
 
-<!-- COMBO INDICATOR -->
-<div id="comboIndicator" class="combo-indicator hidden">
-  <span id="comboCount" class="combo-count">x2</span>
-  <span class="combo-label">COMBO</span>
-</div>
-
-<!-- DAILY LOGIN BONUS -->
-<div id="loginBonusModal" class="modal-overlay hidden">
-  <div class="login-bonus-box">
-    <h2>⚡ DAILY RETURN</h2>
-    <p class="login-streak-label">Login Streak</p>
-    <div id="loginStreakDots" class="login-streak-dots"></div>
-    <p id="loginBonusXP" class="login-bonus-xp"></p>
-    <button onclick="claimLoginBonus()" class="btn gold-btn">CLAIM BONUS</button>
+<!-- ADD MISSION MODAL -->
+<div id="addMissionModal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h2>+ NEW MISSION</h2>
+    <input id="missionName" placeholder="Mission name" class="input-dark">
+    <select id="missionCat" class="input-dark">
+      <option value="physical">Physical Discipline</option>
+      <option value="mental">Mental Clarity</option>
+      <option value="stoic">Stoic Control</option>
+      <option value="strategic">Strategic Intelligence</option>
+      <option value="social">Social Authority</option>
+    </select>
+    <select id="missionDiff" class="input-dark">
+      <option value="1">Easy (+10 XP)</option>
+      <option value="2">Medium (+20 XP)</option>
+      <option value="3">Hard (+35 XP)</option>
+      <option value="4">Epic (+50 XP)</option>
+    </select>
+    <button class="btn-ok" onclick="saveMission()">ADD MISSION</button>
+    <button class="btn-cancel" onclick="closeAddMission()">CANCEL</button>
   </div>
 </div>
+
+<!-- EXPORT/IMPORT -->
+<div id="exportImportModal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h2>💾 EXPORT / IMPORT</h2>
+    <button class="btn-ok" onclick="exportSave()">📤 EXPORT SAVE</button>
+    <textarea id="importArea" class="input-dark" rows="4" placeholder="Paste save data here..."></textarea>
+    <button class="btn-ok" onclick="importSave()">📥 IMPORT SAVE</button>
+    <button class="btn-cancel" onclick="closeExportImport()">CLOSE</button>
+  </div>
+</div>
+
+<!-- WISDOM CHALLENGE -->
+<div id="wisdomModal" class="modal-overlay" style="display:none">
+  <div class="modal-box wisdom-glow">
+    <h2>📜 DAILY WISDOM</h2>
+    <p id="wisdomPrompt" class="wisdom-prompt"></p>
+    <textarea id="wisdomAnswer" class="input-dark" rows="3" placeholder="Your reflection..."></textarea>
+    <button class="btn-ok" onclick="submitWisdom()">SUBMIT (+30 XP)</button>
+    <button class="btn-cancel" onclick="closeWisdom()">SKIP</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast" style="display:none"></div>
 
 <!-- NAV -->
-<nav class="top-nav">
-  <div class="nav-brand">
-    <span class="brand-icon">⚔️</span>
-    <span class="brand-text">EVOLVE</span>
+<nav class="nav-bar">
+  <div class="nav-left">
+    <span class="logo">EVOLVE</span>
+    <span id="prestigeStars" class="prestige-stars"></span>
+    <span id="disciplineBadge" class="discipline-badge">A</span>
+    <span id="seasonBadge" class="season-badge"></span>
   </div>
-  <div class="nav-links">
-    <button class="nav-btn active" data-page="dashboard">COMMAND</button>
-    <button class="nav-btn" data-page="skilltree">SKILL TREE</button>
-    <button class="nav-btn" data-page="achievements">TROPHIES</button>
-    <button class="nav-btn" data-page="quotes">QUOTE VAULT</button>
-    <button class="nav-btn" data-page="journey">JOURNEY</button>
-    <button class="nav-btn" data-page="review">REVIEW</button>
-    <button class="nav-btn" data-page="settings">SETTINGS</button>
+  <div class="nav-tabs">
+    <button class="tab active" onclick="switchTab('dashboard')">🏛 Dashboard</button>
+    <button class="tab" onclick="switchTab('skills')">🌳 Skills</button>
+    <button class="tab" onclick="switchTab('achievements')">🏆 Trophies</button>
+    <button class="tab" onclick="switchTab('battlelog')">📋 Battle Log</button>
+    <button class="tab" onclick="switchTab('review')">📊 Review</button>
+    <button class="tab" onclick="switchTab('records')">🏅 Records</button>
+    <button class="tab" onclick="switchTab('settings')">⚙️ Settings</button>
   </div>
-  <!-- Combo display in nav -->
-  <div id="navCombo" class="nav-combo hidden">
-    <span id="navComboText">🔥 x2 COMBO</span>
+  <div class="nav-right">
+    <span id="goldDisplay" class="gold-display">🪙 0</span>
+    <span id="energyDisplay" class="energy-display">⚡ 100</span>
+    <button class="btn-small" onclick="toggleFocusMode()">🎯 Focus</button>
+    <button class="btn-small" onclick="openShop()">🛒 Shop</button>
+    <button class="btn-small sound-toggle" onclick="toggleSound()" id="soundBtn">🔊</button>
   </div>
 </nav>
 
-<!-- ==================== DASHBOARD ==================== -->
-<main id="page-dashboard" class="page active">
+<!-- COMPANION MESSAGE BAR -->
+<div id="companionBar" class="companion-bar">
+  <span id="companionMsg">Welcome back, warrior.</span>
+</div>
 
-  <!-- Identity Header -->
-  <section class="identity-header" id="identityHeader">
-    <div class="identity-left">
-      <div id="avatarDisplay" class="avatar-display">
-        <div class="avatar-glow"></div>
-        <div class="avatar-symbol" id="avatarSymbol">⚔️</div>
-        <div class="avatar-rank-badge" id="avatarRankBadge">INITIATE</div>
+<!-- TAB: DASHBOARD -->
+<section id="tab-dashboard" class="tab-content active">
+  <!-- Affirmation -->
+  <div id="affirmation" class="affirmation-card"></div>
+
+  <!-- Identity -->
+  <div class="card identity-card">
+    <div class="identity-row">
+      <div class="avatar-ring" onclick="openAvatarPicker()">
+        <span id="avatarSymbol" class="avatar-symbol">⚔️</span>
+        <span id="petDisplay" class="pet-display"></span>
+      </div>
+      <div class="identity-info">
+        <h1 id="playerName">WARRIOR MONK</h1>
+        <p id="playerTitle" class="player-title"></p>
+        <p id="playerManifesto" class="manifesto"></p>
+        <div class="xp-bar-container">
+          <div id="xpBar" class="xp-bar"></div>
+          <span id="xpText" class="xp-text"></span>
+        </div>
+        <div class="rank-row">
+          <span id="rankBadge" class="rank-badge"></span>
+          <span id="levelBadge" class="level-badge"></span>
+        </div>
       </div>
     </div>
-    <div class="identity-center">
-      <h1 id="identityTitle" class="identity-title">THE IRON DISCIPLE</h1>
-      <p id="identityManifesto" class="identity-manifesto">I am becoming the version of myself that cannot be stopped.</p>
-      <div class="rank-progress">
-        <span id="currentRankLabel" class="rank-label">INITIATE</span>
-        <div class="rank-bar"><div id="rankBarFill" class="rank-bar-fill"></div></div>
-        <span id="nextRankLabel" class="rank-label dim">DISCIPLE</span>
+    <!-- Emotion tracker inline -->
+    <div class="emotion-row">
+      <span>How are you feeling?</span>
+      <div class="emotion-buttons">
+        <button onclick="logEmotion('🔥')">🔥</button>
+        <button onclick="logEmotion('😤')">😤</button>
+        <button onclick="logEmotion('😐')">😐</button>
+        <button onclick="logEmotion('😔')">😔</button>
+        <button onclick="logEmotion('💀')">💀</button>
       </div>
+      <span id="todayEmotion" class="today-emotion"></span>
     </div>
-    <div class="identity-right">
-      <div class="alignment-ring" id="alignmentRing">
-        <svg viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="52" class="ring-bg"/>
-          <circle cx="60" cy="60" r="52" class="ring-fill" id="alignRingFill"/>
-        </svg>
-        <span id="alignPercent" class="align-percent">100%</span>
-      </div>
-      <span class="align-label">ALIGNMENT</span>
+  </div>
+
+  <!-- Habit Chain -->
+  <div class="card">
+    <h3>🔗 Habit Chain</h3>
+    <div id="habitChain" class="habit-chain"></div>
+  </div>
+
+  <!-- Stats & Virtues Row -->
+  <div class="two-col">
+    <div class="card">
+      <h3>📊 Core Attributes</h3>
+      <div id="statsGrid" class="stats-grid"></div>
     </div>
-  </section>
-
-  <!-- XP Bar -->
-  <section class="xp-section">
-    <div class="xp-info">
-      <span>LEVEL <strong id="levelNum">1</strong></span>
-      <span id="xpText">0 / 100 XP</span>
+    <div class="card">
+      <h3>🏛️ Cardinal Virtues</h3>
+      <div id="virtuesGrid" class="virtues-grid"></div>
     </div>
-    <div class="xp-bar"><div id="xpFill" class="xp-fill"></div></div>
-    <div class="xp-sub-info">
-      <span>Total XP: <strong id="totalXPDisplay">0</strong></span>
-      <span>Skill Points: <strong id="spDisplay">0</strong></span>
-      <span id="loginStreakNav">🔥 Login Streak: <strong id="loginStreakDisplay">0</strong></span>
+  </div>
+
+  <!-- Spirit Pet & Energy -->
+  <div class="two-col">
+    <div class="card pet-card">
+      <h3>🐺 Spirit Companion</h3>
+      <div id="petInfo" class="pet-info"></div>
     </div>
-  </section>
-
-  <!-- Core Attributes -->
-  <section class="section-panel">
-    <h2 class="section-title">CORE ATTRIBUTES</h2>
-    <div class="attributes-grid" id="attributesGrid"></div>
-  </section>
-
-  <!-- Weekly Challenges -->
-  <section class="section-panel">
-    <h2 class="section-title">⚡ WEEKLY CHALLENGES <span id="challengeTimer" class="challenge-timer"></span></h2>
-    <div id="weeklyChallenges" class="weekly-challenges"></div>
-  </section>
-
-  <!-- Momentum Engine -->
-  <section class="section-panel">
-    <h2 class="section-title">MOMENTUM ENGINE</h2>
-    <div class="momentum-row">
-      <div class="momentum-stat">
-        <span class="momentum-label">STREAK</span>
-        <span id="streakNum" class="momentum-value">0</span>
-        <span class="momentum-unit">DAYS</span>
-      </div>
-      <div class="momentum-bar-wrap">
-        <div class="momentum-bar"><div id="momentumFill" class="momentum-fill"></div></div>
-        <span id="momentumVal" class="momentum-val-label">0 / 100</span>
-      </div>
-      <div class="momentum-stat">
-        <span class="momentum-label">MULTIPLIER</span>
-        <span id="momentumMult" class="momentum-value gold">×1.00</span>
-      </div>
+    <div class="card energy-card">
+      <h3>⚡ Spirit Energy</h3>
+      <div id="energyInfo" class="energy-info"></div>
+      <button class="btn-small" onclick="useEnergy('xp')">Spend 30⚡ → +25 XP</button>
+      <button class="btn-small" onclick="useEnergy('boss')">Spend 50⚡ → Boss DMG</button>
+      <button class="btn-small" onclick="useEnergy('gold')">Spend 20⚡ → +10 Gold</button>
     </div>
-  </section>
+  </div>
 
-  <!-- Daily Missions -->
-  <section class="section-panel">
-    <div class="section-header-row">
-      <h2 class="section-title">DAILY MISSIONS</h2>
-      <button class="btn small-btn" onclick="openAddMission()">+ ADD MISSION</button>
+  <!-- Boss & Momentum -->
+  <div class="two-col">
+    <div class="card boss-card">
+      <h3>🐉 Boss Battle</h3>
+      <div id="bossArea"></div>
     </div>
+    <div class="card">
+      <h3>🔥 Momentum Engine</h3>
+      <div id="momentumArea"></div>
+    </div>
+  </div>
 
-    <h3 class="mission-cat">🔴 CORE MISSIONS <span class="cat-sub">(Non-Negotiable)</span></h3>
-    <div id="coreMissions" class="mission-list"></div>
+  <!-- Daily Quests -->
+  <div class="card">
+    <h3>📅 Daily Quests</h3>
+    <div id="dailyQuests" class="daily-quests"></div>
+  </div>
 
-    <h3 class="mission-cat">🟡 GROWTH MISSIONS</h3>
-    <div id="growthMissions" class="mission-list"></div>
-
-    <h3 class="mission-cat">🟣 CHALLENGE MISSION</h3>
-    <div id="challengeMissions" class="mission-list"></div>
-  </section>
-
-  <!-- Add Mission Modal -->
-  <div id="addMissionModal" class="modal-overlay hidden">
-    <div class="modal-box">
-      <h2>ADD MISSION</h2>
-      <label>Name<input id="mName" placeholder="Mission name"></label>
-      <label>Category
-        <select id="mCat">
-          <option value="core">Core</option>
-          <option value="growth">Growth</option>
-          <option value="challenge">Challenge</option>
+  <!-- Missions -->
+  <div class="card">
+    <div class="mission-header">
+      <h3>⚔️ Missions</h3>
+      <div class="mission-controls">
+        <select id="missionFilter" class="input-dark-small" onchange="renderMissions()">
+          <option value="all">All Categories</option>
+          <option value="physical">Physical</option>
+          <option value="mental">Mental</option>
+          <option value="stoic">Stoic</option>
+          <option value="strategic">Strategic</option>
+          <option value="social">Social</option>
         </select>
-      </label>
-      <label>Difficulty
-        <select id="mDiff">
-          <option value="1">Easy (×1)</option>
-          <option value="2">Medium (×2)</option>
-          <option value="3">Hard (×3)</option>
-        </select>
-      </label>
-      <label>Stat Influence
-        <select id="mStat">
-          <option value="discipline">Discipline</option>
-          <option value="focus">Focus</option>
-          <option value="energy">Energy</option>
-          <option value="strength">Strength</option>
-          <option value="resilience">Resilience</option>
-          <option value="knowledge">Knowledge</option>
-        </select>
-      </label>
-      <label>Base XP<input id="mXP" type="number" value="15" min="5" max="100"></label>
-      <div class="modal-actions">
-        <button class="btn" onclick="closeAddMission()">CANCEL</button>
-        <button class="btn gold-btn" onclick="saveMission()">SAVE</button>
+        <button class="btn-small" onclick="openAddMission()">+ ADD MISSION</button>
+      </div>
+    </div>
+    <div id="missionList" class="mission-list"></div>
+  </div>
+
+  <!-- Timers Row -->
+  <div class="two-col">
+    <div class="card">
+      <h3>⏱ Focus Timer</h3>
+      <div id="timerArea" class="timer-area"></div>
+    </div>
+    <div class="card">
+      <h3>🧘 Breathing Exercise</h3>
+      <div id="breathingArea" class="breathing-area">
+        <div id="breathCircle" class="breath-circle">
+          <span id="breathText">BEGIN</span>
+        </div>
+        <button class="btn-small" onclick="toggleBreathing()">Start Breathing</button>
       </div>
     </div>
   </div>
 
-  <!-- Focus Timer -->
-  <section class="section-panel">
-    <h2 class="section-title">FOCUS TIMER</h2>
-    <div class="timer-wrap">
-      <div class="timer-display" id="timerDisplay">25:00</div>
-      <div class="timer-controls">
-        <button class="btn" onclick="adjustTimer(-5)">-5</button>
-        <button class="btn gold-btn" id="timerBtn" onclick="toggleTimer()">START</button>
-        <button class="btn" onclick="adjustTimer(5)">+5</button>
-      </div>
-      <p class="timer-note">Completing a session grants <strong>15 XP</strong> + combo bonus</p>
+  <!-- Challenge Arena & Mini-Game -->
+  <div class="two-col">
+    <div class="card">
+      <h3>🏟️ Challenge Arena</h3>
+      <p class="muted">Timed challenges for bonus rewards</p>
+      <button class="btn-small" onclick="openArena()">ENTER ARENA</button>
     </div>
-  </section>
-
-  <!-- Mini Stat Charts -->
-  <section class="section-panel">
-    <h2 class="section-title">📈 ATTRIBUTE GROWTH</h2>
-    <div class="stat-charts-grid" id="statChartsGrid"></div>
-  </section>
-
-</main>
-
-<!-- ==================== SKILL TREE ==================== -->
-<main id="page-skilltree" class="page">
-  <section class="section-panel">
-    <h2 class="section-title">SKILL TREE <span class="sp-badge">SP: <span id="spTree">0</span></span></h2>
-    <div id="skillTreeGrid" class="skill-tree-grid"></div>
-  </section>
-</main>
-
-<!-- ==================== ACHIEVEMENTS ==================== -->
-<main id="page-achievements" class="page">
-  <section class="section-panel">
-    <h2 class="section-title">🏆 TROPHY HALL</h2>
-    <div class="achievement-stats-row">
-      <div class="ach-stat"><span id="achUnlocked">0</span><label>Unlocked</label></div>
-      <div class="ach-stat"><span id="achTotal">0</span><label>Total</label></div>
-      <div class="ach-stat"><span id="achRarest">—</span><label>Rarest</label></div>
+    <div class="card">
+      <h3>🧠 Memory Trial</h3>
+      <p class="muted">Test your memory for XP</p>
+      <button class="btn-small" onclick="openMiniGame()">PLAY</button>
     </div>
-    <div class="achievement-filters">
-      <button class="filter-btn active" data-filter="all">ALL</button>
-      <button class="filter-btn" data-filter="common">⚪ COMMON</button>
-      <button class="filter-btn" data-filter="rare">🔵 RARE</button>
-      <button class="filter-btn" data-filter="epic">🟣 EPIC</button>
-      <button class="filter-btn" data-filter="legendary">🟡 LEGENDARY</button>
+  </div>
+
+  <!-- Time Bonus & Login Streak -->
+  <div class="two-col">
+    <div class="card">
+      <h3>🌙 Time Bonus</h3>
+      <div id="timeBonus"></div>
     </div>
+    <div class="card">
+      <h3>⚡ Login Streak</h3>
+      <div id="loginStreak"></div>
+    </div>
+  </div>
+
+  <!-- Weekly Challenges -->
+  <div class="card">
+    <h3>⚡ Weekly Challenges</h3>
+    <div id="weeklyChallenges"></div>
+  </div>
+
+  <!-- Stat Charts -->
+  <div class="card">
+    <h3>📈 Stat Growth (7 Days)</h3>
+    <div id="statCharts" class="stat-charts"></div>
+  </div>
+
+  <!-- Inventory -->
+  <div class="card">
+    <h3>🎒 Inventory</h3>
+    <div id="inventoryGrid" class="inventory-grid"></div>
+  </div>
+</section>
+
+<!-- TAB: SKILLS -->
+<section id="tab-skills" class="tab-content">
+  <div class="card">
+    <h3>🌳 Skill Tree <span id="spDisplay" class="sp-display"></span></h3>
+    <p id="skillComboInfo" class="muted"></p>
+    <div id="skillTree" class="skill-tree"></div>
+  </div>
+</section>
+
+<!-- TAB: ACHIEVEMENTS -->
+<section id="tab-achievements" class="tab-content">
+  <div class="card">
+    <h3>📌 Showcase <span class="muted">(click to pin/unpin)</span></h3>
+    <div id="achievementShowcase" class="showcase-grid"></div>
+  </div>
+  <div class="card">
+    <h3>🏆 All Achievements</h3>
     <div id="achievementGrid" class="achievement-grid"></div>
-  </section>
-</main>
+  </div>
+  <div class="card">
+    <h3>🎖️ Titles Earned</h3>
+    <div id="titlesGrid" class="titles-grid"></div>
+  </div>
+  <div class="card">
+    <h3>📜 Stoic Quotes Unlocked</h3>
+    <div id="quotesList" class="quotes-list"></div>
+  </div>
+</section>
 
-<!-- ==================== QUOTE VAULT ==================== -->
-<main id="page-quotes" class="page">
-  <section class="section-panel">
-    <h2 class="section-title">📜 STOIC QUOTE VAULT</h2>
-    <p class="vault-sub">Quotes unlock as you reach milestones. Your wisdom grows with your discipline.</p>
-    <div id="quoteVault" class="quote-vault"></div>
-  </section>
-</main>
+<!-- TAB: BATTLE LOG -->
+<section id="tab-battlelog" class="tab-content">
+  <div class="card">
+    <h3>📋 Battle Log</h3>
+    <button class="btn-small" onclick="clearBattleLog()">Clear Log</button>
+    <div id="battleLog" class="battle-log"></div>
+  </div>
+</section>
 
-<!-- ==================== JOURNEY TIMELINE ==================== -->
-<main id="page-journey" class="page">
-  <section class="section-panel">
-    <h2 class="section-title">🗺️ YOUR JOURNEY</h2>
-    <p class="vault-sub">Every milestone carved into the stone of your evolution.</p>
-    <div id="journeyTimeline" class="journey-timeline"></div>
-  </section>
-</main>
+<!-- TAB: REVIEW -->
+<section id="tab-review" class="tab-content">
+  <div class="card">
+    <h3>📊 Weekly Review</h3>
+    <div id="heatmap" class="heatmap"></div>
+    <div id="reviewStats"></div>
+  </div>
+  <div class="card">
+    <h3>😤 Emotion History</h3>
+    <div id="emotionHistory" class="emotion-history"></div>
+  </div>
+  <div class="card">
+    <h3>🏆 Personal Leaderboard</h3>
+    <p class="muted">Your best days ranked</p>
+    <div id="leaderboard" class="leaderboard"></div>
+  </div>
+  <div class="card">
+    <h3>🗺️ Journey Timeline</h3>
+    <div id="timeline" class="timeline"></div>
+  </div>
+  <div class="card">
+    <h3>📓 Reflection Journal</h3>
+    <textarea id="journalEntry" class="input-dark" rows="3" placeholder="Today I learned..."></textarea>
+    <button class="btn-small" onclick="saveJournal()">Save Entry</button>
+    <div id="journalHistory"></div>
+  </div>
+</section>
 
-<!-- ==================== WEEKLY REVIEW ==================== -->
-<main id="page-review" class="page">
-  <section class="section-panel">
-    <h2 class="section-title">WEEKLY REVIEW</h2>
-    <div class="review-grid">
-      <div class="review-card">
-        <h3>7-DAY HEATMAP</h3>
-        <div id="heatmap" class="heatmap"></div>
-      </div>
-      <div class="review-card">
-        <h3>STATS SUMMARY</h3>
-        <div id="reviewStats" class="review-stats"></div>
-      </div>
-      <div class="review-card">
-        <h3>ALIGNMENT AVG</h3>
-        <p id="avgAlign" class="big-num">—</p>
-      </div>
-      <div class="review-card">
-        <h3>MISSED CORE</h3>
-        <p id="missedCore" class="big-num red">0</p>
-      </div>
-    </div>
-    <div class="review-card full">
-      <h3>REFLECTION JOURNAL</h3>
-      <textarea id="journalEntry" placeholder="What did you learn this week?"></textarea>
-      <button class="btn gold-btn" onclick="saveJournal()">SAVE REFLECTION</button>
-    </div>
-  </section>
-</main>
+<!-- TAB: RECORDS -->
+<section id="tab-records" class="tab-content">
+  <div class="card">
+    <h3>🏅 Personal Records</h3>
+    <div id="personalRecords" class="records-grid"></div>
+  </div>
+  <div class="card">
+    <h3>🏆 Hall of Records</h3>
+    <div id="hallOfRecords" class="records-grid"></div>
+  </div>
+</section>
 
-<!-- ==================== SETTINGS ==================== -->
-<main id="page-settings" class="page">
-  <section class="section-panel">
-    <h2 class="section-title">SETTINGS</h2>
-    <div class="settings-group">
-      <h3>IDENTITY</h3>
-      <label>Title<input id="setTitle" placeholder="THE IRON DISCIPLE"></label>
-      <label>Manifesto<input id="setManifesto" placeholder="Your one-line creed"></label>
-      <button class="btn gold-btn" onclick="saveIdentity()">SAVE IDENTITY</button>
-    </div>
-    <div class="settings-group">
-      <h3>MANAGE MISSIONS</h3>
-      <div id="missionManager"></div>
-    </div>
-    <div class="settings-group">
-      <h3>AUDIO</h3>
-      <label class="toggle-label">
-        <input type="checkbox" id="audioToggle" checked onchange="toggleAudio()">
-        Sound Effects
-      </label>
-    </div>
-    <div class="settings-group danger">
-      <h3>⚠️ DANGER ZONE</h3>
-      <button class="btn red-btn" onclick="resetAll()">RESET EVERYTHING</button>
-      <p class="danger-note">This will erase all progress. There is no going back.</p>
-    </div>
-  </section>
-</main>
+<!-- TAB: SETTINGS -->
+<section id="tab-settings" class="tab-content">
+  <div class="card">
+    <h3>🎨 Theme & Accent Color</h3>
+    <div id="themeSelector" class="theme-selector"></div>
+  </div>
+  <div class="card">
+    <h3>⚔️ War Cry</h3>
+    <input id="warCryInput" class="input-dark" placeholder="Your battle phrase...">
+    <button class="btn-small" onclick="saveWarCry()">Save War Cry</button>
+  </div>
+  <div class="card">
+    <h3>🌙 Auto Night Dim</h3>
+    <label class="toggle-label">
+      <input type="checkbox" id="nightDimToggle" onchange="toggleNightDim()"> Enable auto-dim after 10pm
+    </label>
+  </div>
+  <div class="card">
+    <h3>🛡️ Identity</h3>
+    <input id="nameInput" class="input-dark" placeholder="Your name">
+    <textarea id="manifestoInput" class="input-dark" rows="2" placeholder="Your manifesto"></textarea>
+    <button class="btn-small" onclick="saveIdentity()">Save Identity</button>
+  </div>
+  <div class="card">
+    <h3>💾 Save Data</h3>
+    <button class="btn-small" onclick="openExportImport()">Export / Import</button>
+    <button class="btn-small" onclick="generateDailyReport()">📝 Generate Daily Report</button>
+  </div>
+  <div class="card">
+    <h3>♻️ Prestige</h3>
+    <p class="muted">Requires Level 20+</p>
+    <button class="btn-small" onclick="openPrestige()">Prestige Reset</button>
+  </div>
+  <div class="card danger-zone">
+    <h3>⚠️ Danger Zone</h3>
+    <button class="btn-danger" onclick="resetAll()">RESET EVERYTHING</button>
+  </div>
+</section>
 
 <script src="script.js"></script>
 </body>
